@@ -1,11 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {freshState,newRule,validateState} from '../src/model.js';
-import {materializeEvents,nominalDate} from '../src/recurrence.js';
-import {forecast} from '../src/forecast.js';
-import {changeOccurrence,postOccurrence,cancelOccurrence,undoPosted,cleanAfterManualBalanceUpdate,restoreOccurrence} from '../src/operations.js';
-import {addDays,addMonthsAnchored,shiftWeekday,diffDays} from '../src/date.js';
-import {parseEuroCents} from '../src/money.js';
+import '../src/date.js';
+import '../src/money.js';
+import '../src/model.js';
+import '../src/recurrence.js';
+import '../src/forecast.js';
+import '../src/operations.js';
+const {freshState,newRule,validateState}=globalThis.FinanzkompassModules.model;
+const {materializeEvents,nominalDate}=globalThis.FinanzkompassModules.recurrence;
+const {forecast}=globalThis.FinanzkompassModules.forecast;
+const {changeOccurrence,postOccurrence,cancelOccurrence,undoPosted,cleanAfterManualBalanceUpdate,restoreOccurrence}=globalThis.FinanzkompassModules.operations;
+const {addDays,addMonthsAnchored,shiftWeekday,diffDays}=globalThis.FinanzkompassModules.date;
+const {parseEuroCents}=globalThis.FinanzkompassModules.money;
 const anchor='2026-11-05';
 const state=()=>freshState(anchor);
 const add=(s,title,cents,date,frequency='none',weekdayPolicy='none')=>{
@@ -127,7 +133,7 @@ test('Gebuchte Snapshots bleiben nach Serienaufteilung in Kalender/Historie sich
  assert.equal(history.filter(x=>x.posted).length,1);
 });
 test('Negativer Kontostand lässt sich mit Vorzeichen für Formular rendern',async()=>{
- const {toSignedEuroInput}=await import('../src/money.js');
+ const {toSignedEuroInput}=globalThis.FinanzkompassModules.money;
  assert.equal(toSignedEuroInput(-15250),'-152,50');
 });
 

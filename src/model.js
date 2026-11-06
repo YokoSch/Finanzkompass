@@ -1,15 +1,24 @@
+/*
+ * Modul model.js – Browser-kompatibel auch über file://.
+ * Eigenständiger Scope: nur die bewusst exportierten Funktionen werden
+ * unter globalThis.FinanzkompassModules.model veröffentlicht.
+ * Die Abhängigkeiten werden durch die Reihenfolge der defer-Skripte in
+ * /index.html geladen; kein Build, kein Server und keine Bibliothek nötig.
+ */
+(function(modules) {
+'use strict';
+const {todayISO,addYears,isValidISO} = modules.date;
 /**
  * model.js — versioniertes Datenmodell. Vorzeichen: Einnahme positiv, Ausgabe negativ.
  * recurrence.anchor = erster NOMINALER Termin; Ausnahmen per occurrenceIndex.
  * currentBalanceCents = bereits BANKSEITIG verbuchter Kontostand am balanceDate.
  */
-import {todayISO,addYears,isValidISO} from './date.js';
-export const DATA_VERSION=1;
-export const STORAGE_KEY='finanzkompass.v1';
-export const FREQUENCIES=['none','daily','weekly','monthly','yearly'];
-export const WEEKEND_POLICIES=['none','previous','next'];
-export const id=()=>`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
-export function freshState(now=todayISO()) {
+const DATA_VERSION=1;
+const STORAGE_KEY='finanzkompass.v1';
+const FREQUENCIES=['none','daily','weekly','monthly','yearly'];
+const WEEKEND_POLICIES=['none','previous','next'];
+const id=()=>`${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
+function freshState(now=todayISO()) {
   return {
     version:DATA_VERSION,
     settings:{currentBalanceCents:0,balanceDate:now,viewStart:now,viewEnd:addYears(now,1),reserveCents:0,theme:'system'},
@@ -17,7 +26,7 @@ export function freshState(now=todayISO()) {
     updatedAt:new Date().toISOString()
   };
 }
-export function newRule(input) {
+function newRule(input) {
   return {
     id:id(),title:String(input.title||'').trim(),amountCents:input.amountCents,
     anchor:input.anchor,frequency:input.frequency||'none',interval:1,
@@ -25,7 +34,7 @@ export function newRule(input) {
     note:String(input.note||'').trim(),createdAt:new Date().toISOString()
   };
 }
-export function validateState(s) {
+function validateState(s) {
   if(!s||typeof s!=='object'||s.version!==DATA_VERSION) throw Error('Unbekanntes Datenformat oder Versionsnummer.');
   if(!s.settings||!Array.isArray(s.rules)||!Array.isArray(s.exceptions)||!Array.isArray(s.posted)) throw Error('Die Datendatei ist unvollständig.');
   const set=s.settings;
@@ -56,3 +65,6 @@ export function validateState(s) {
   if(JSON.stringify(s).length>8_000_000)throw Error('Datei zu groß (maximal 8 MB).');
   return s;
 }
+// Nur dieses Modul exportiert seine öffentliche API.
+modules.model = Object.freeze({ DATA_VERSION, STORAGE_KEY, FREQUENCIES, WEEKEND_POLICIES, id, freshState, newRule, validateState });
+})(globalThis.FinanzkompassModules || (globalThis.FinanzkompassModules = Object.create(null)));

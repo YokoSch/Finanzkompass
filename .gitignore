@@ -1,0 +1,12 @@
+# Lokale temporäre Dateien, persönliche Backups und Abhängigkeiten
+node_modules/
+.DS_Store
+*.log
+Finanzkompass_Backup_*.json
+*PRIVATE*.json
+*.local.json
+.env
+.env.*
+# Ausgabedateien bleiben außerhalb der modularen GitHub-Pages-Veröffentlichung
+dist/
+__pycache__/

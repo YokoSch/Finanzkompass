@@ -1,6 +1,6 @@
 # Entwicklernotizen / Übergabe an künftige ChatGPT-Sitzungen
 
-**Projekt:** Finanzkompass, Version 1.0.0 (05.11.2026). Dies ist die gezielte Kurzorientierung für spätere Anpassungen: bitte zuerst `ARCHITEKTUR.md` und diese Notizen lesen, bevor die Funktionalität geändert wird.
+**Projekt:** Finanzkompass, Version 1.0.1 (06.11.2026). Dies ist die gezielte Kurzorientierung für spätere Anpassungen: bitte zuerst `ARCHITEKTUR.md` und diese Notizen lesen, bevor die Funktionalität geändert wird.
 
 ## Ausgangswünsche des Nutzers
 
@@ -13,8 +13,9 @@
 
 ## Aktueller Projektstatus
 
-- In `dist/Finanzkompass.html` liegt die fertige Einzeldatei.
-- In `src/` liegt der modulare, in ESM-Dateien aufgeteilte Quellcode.
+- Die **Root-`index.html`** ist der Hauptstartpunkt für **Doppelklick und GitHub Pages**. Sie bindet alle getrennten `src/*.js`-Module mit `<script defer>` ein.
+- In `src/` liegt der modulare Code in **gekapselten klassischen Skripten (IIFEs)**. Die öffentliche API jedes Moduls liegt unter `globalThis.FinanzkompassModules.<modulname>`. **Reihenfolge im HTML beibehalten.**
+- `dist/Finanzkompass.html` ist nur ein **optionaler** zusätzlicher Einzeldatei-Export nach `npm run build`, nicht das GitHub-Auslieferungsformat.
 - Das Backend ist **kein Backend**, sondern der browserunabhängig testbare JavaScript-Rechenkern.
 - `npm test` sollte **20 Engine-Tests** bestehen. Zusätzlich `python tests/browser-smoke.py` für Chrome/Playwright (falls installiert).
 - Der CSS-Look ist bewusst neutral/modern: viel Weißraum, gedecktes Petrol/Türkis, dezente Linien, mobil Bottom-Navigation + FAB, Desktop Sidebar, Extras in Dialogen/`details`.
@@ -30,7 +31,8 @@
 | Dialoge oder Seiten gestalten | `src/ui-render.js`, `src/styles.css` | Nutzerstrings immer `esc()`; Mobile prüfen |
 | Klick- und Eingabeereignisse | `src/ui-actions.js` | Änderungen nur via `mutate`; kein manuelles DOM als Quelle der Wahrheit |
 | Diagramm / Performance | `src/chart.js` | Tiefpunkte beim Downsampling erhalten |
-| Quellcode in Einzel-HTML bauen | `scripts/build.mjs` | Feste Dateireihenfolge ergänzen |
+| Neue Moduldatei hinzufügen | `src/neues-modul.js`, Root-`index.html` | Explizit APIs registrieren, `defer`-Reihenfolge beachten; kein `import` verwenden |
+| Optionalen Ein-Datei-Export bauen | `scripts/build.mjs` | Baut aus den Referenzen der Root-`index.html`, nicht für GitHub erforderlich |
 | Farb- und Icon-Stil | `src/styles.css`, `src/icons.js` | Keine externen Dienste einführen |
 
 ## Kritische Fallstricke, die bereits abgefangen sind
@@ -64,9 +66,9 @@
 3. Fachlogik in `operations.js` / `recurrence.js` / `forecast.js` ändern, nicht im HTML-Renderer.
 4. Dialog und Klickaktion getrennt hinzufügen (`ui-render.js` vs. `ui-actions.js`).
 5. Für die minimale Oberfläche neue Optionen nach Möglichkeit als sekundären Dialog/`details` statt dauerhaft sichtbar darstellen.
-6. `npm test`, `npm run build`, `python tests/browser-smoke.py` laufen lassen; mobile Darstellung bei ca. 390 px prüfen.
+6. `npm test` ausführen; optional `npm run build` und `python tests/browser-smoke.py` für DOM-Tests. Die GitHub-Pages-Dateien und ein entpacktes lokales Projekt nutzen dieselben getrennten Skripte. Mobile Darstellung bei ca. 390 px prüfen.
 7. Änderungen in `CHANGELOG.md` und ggf. `ARCHITEKTUR.md` dokumentieren; Schemaänderungen brauchen Version/Migration.
-8. Der Nutzer soll nach Änderungen **immer die neue gebaute HTML-Datei und ggf. das geänderte Quellprojekt** erhalten.
+8. Dem Nutzer immer das **vollständige modulare ZIP** mit `index.html` + `src/` bereitstellen. Der Standalone-Build ist nur optional.
 
 ## Beispiel einer nachvollziehbaren neuen Funktion
 

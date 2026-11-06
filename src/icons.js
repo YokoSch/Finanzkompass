@@ -1,3 +1,12 @@
+/*
+ * Modul icons.js – Browser-kompatibel auch über file://.
+ * Eigenständiger Scope: nur die bewusst exportierten Funktionen werden
+ * unter globalThis.FinanzkompassModules.icons veröffentlicht.
+ * Die Abhängigkeiten werden durch die Reihenfolge der defer-Skripte in
+ * /index.html geladen; kein Build, kein Server und keine Bibliothek nötig.
+ */
+(function(modules) {
+'use strict';
 /** icons.js — lokale Inline-SVGs statt externer Icon-Library/CDN. */
 const paths={
   wallet:'<rect x="2" y="5" width="20" height="16" rx="3"/><path d="M3 8V5a2 2 0 0 1 2-2h14"/><path d="M16 14h6"/><circle cx="16" cy="14" r="1"/>',
@@ -31,4 +40,7 @@ const paths={
   menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
   dots:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>'
 };
-export function icon(name,size=20){return `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.info}</svg>`;}
+function icon(name,size=20){return `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.info}</svg>`;}
+// Nur dieses Modul exportiert seine öffentliche API.
+modules.icons = Object.freeze({ icon });
+})(globalThis.FinanzkompassModules || (globalThis.FinanzkompassModules = Object.create(null)));

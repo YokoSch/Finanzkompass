@@ -1,23 +1,20 @@
-# Changelog
+# Änderungsverlauf
 
-## 1.0.0 — 05.11.2026
+## 1.0.1 — 06.11.2026 · Startproblem behoben
 
-**Erste nutzbare Offline-Version** des Finanzkompasses.
+- **Fix:** `/index.html` startet nicht mehr nur über HTTP(S), sondern normalerweise auch direkt als `file://`-Datei nach vollständigem Entpacken.
+- Die einzelnen JavaScript-Dateien bleiben modular mit eigenen Scopes und klaren APIs (`globalThis.FinanzkompassModules`). Klassische geordnete Skripte ersetzen Browser-ESM-Imports.
+- GitHub Pages lädt **dieselben einzelnen Quelldateien** unverändert und benötigt keinen Build-Schritt.
+- Doppelte `src/index.html` entfernt; nur die Root-`index.html` bleibt.
+- Optionaler Ein-Datei-Build erzeugt weiterhin `dist/Finanzkompass.html` aus den verlinkten Skripten und CSS.
+- Entwicklerdokumentation, Testanweisungen und GitHub-Pages-Anleitung aktualisiert.
+- **Keine Änderung am JSON-Schema** (`version: 1`), an den Finanzregeln oder am Speicher-Key (`finanzkompass.v1`).
+- 20 Rechenregressionstests bestanden; Desktop-/Mobile-Smoke-Tests mit den eingebetteten Originalskripten bestanden. Direkte `file://`-/`localhost`-Navigation konnte in der isolierten Testumgebung nicht durchgeführt werden (administrativ gesperrt).
 
-- Minimalistische, responsive Startseite mit sicherem Ausgabelimit, Tiefpunkt, aktuellem Saldo, Diagramm und anstehenden Buchungen.
-- Tagesgenaue Simulation ab dem Kontostand-Stichtag; Default ein Jahr, individuelle Intervalle.
-- Einmalige und wiederkehrende Einnahmen/Ausgaben; tägliche, wöchentliche, monatliche und jährliche Rhythmen.
-- Monatskalender, Tageslisten und Regelübersicht mit Suche und Filter.
-- Einzeltermine ändern, ausfallen lassen, wiederherstellen; Serien ab Zeitpunkt teilen oder insgesamt bearbeiten.
-- Optional Wochenendtermine auf Montag–Freitag verschieben (ohne Feiertage).
-- Gebuchte Zahlungen, alternative Behandlung bereits im Kontostand enthaltener Umsätze.
-- Was-wäre-wenn-Rechner, Sicherheitsreserve, Monatsdurchschnitt, Hell-/Dunkelmodus.
-- Browser-Lokalspeicherung mit Warn-/Fallbackmodus sowie vollständiger JSON-Import/-Export.
-- Modulare ES-Module, kommentierter Code, dependency-freier Einzeldatei-Build.
-- 20 Engine-Regressionstests und optionaler Desktop-/Mobil-Browser-Smoke-Test.
+## 1.0.0 — 05.11.2026 · Erste Version
 
-## GitHub-Pages-Auslieferung (modular, unveränderter Funktionsstand 1.0.0)
-
-- Neu: kleine `index.html` im Repository-Stamm; CSS/JavaScript werden einzeln über `src/` geladen.
-- Neu: `README.md` und `GITHUB_PAGES.md` für Einrichtung, Datenschutz und Erweiterung.
-- Unverändert: Berechnungslogik, Datenmodell und Speicherformat.
+- Minimalistische, responsive UI mit sicher ausgebbarem Betrag, Diagramm und Buchungskalender.
+- Tagesgenaue Simulation, einmalige und wiederkehrende Einnahmen/Ausgaben.
+- Einzelne Serientermine verschieben, ausfallen lassen oder Serie ändern.
+- Gebuchte Zahlungen, Sicherheitsreserve, Was-wäre-wenn-Rechner, JSON-Backup, Hell-/Dunkelmodus.
+- Initiale ESM-basierte modulare Version; Doppelklick-Startproblem in 1.0.1 behoben.

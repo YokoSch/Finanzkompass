@@ -1,9 +1,9 @@
 {
   "name": "finanzkompass",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
-  "description": "Offlinefähiger, modularer persönlicher Liquiditätsplaner",
+  "description": "Modularer Finanzplaner, der direkt per Doppelklick und auf GitHub Pages startet",
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs"

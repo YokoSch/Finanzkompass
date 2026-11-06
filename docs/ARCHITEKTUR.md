@@ -1,6 +1,6 @@
 # Finanzkompass — Architektur und Entwicklerübergabe
 
-**Stand:** Version 1.0.0, 05.11.2026. Diese Datei ist die wichtigste Grundlage für spätere Änderungen. Das System ist bewusst ohne Framework, Build-Abhängigkeiten oder Fremd-APIs geschrieben. Oberfläche, fachliche Operationen, Wiederholungslogik und Simulator sind getrennt.
+**Stand:** Version 1.0.1, 06.11.2026. Diese Datei ist die wichtigste Grundlage für spätere Änderungen. Das System ist bewusst ohne Framework, Build-Abhängigkeiten oder Fremd-APIs geschrieben. Oberfläche, fachliche Operationen, Wiederholungslogik und Simulator sind getrennt.
 
 ## 1. Dateien und Abhängigkeiten
 
@@ -129,21 +129,10 @@ Offene Zahlungen **vor** `balanceDate` werden nicht als automatische Rückständ
 
 ## 6. Standalone-Build
 
-`npm run build` erzeugt `dist/Finanzkompass.html`. Das Buildskript verkettet die ESM-Quelldateien in einer genau definierten Reihenfolge und entfernt nur die **statischen Import-/Export-Deklarationen**. Alle Funktionen landen im selben gekapselten Scope. Deshalb:
+### 1.0.1: getrennte Dateien ohne Server und ohne Build
 
-- Neue Quelldatei **in `scripts/build.mjs` an der korrekten Stelle** in `order` ergänzen.
-- Keine gleichnamigen top-level `const`/`let`/Funktionen in verschiedenen Modulen, da die Standalone-Fassung sonst einen Syntaxfehler bekommt.
-- Keine dynamischen Imports oder unüblichen mehrzeiligen Importformen, ohne das Buildskript zu erweitern.
-- Immer auch den Standalone-Build testen — erfolgreiche ESM-Tests allein garantieren noch keinen fehlerfreien Bundle-Scope.
+Die Root-`index.html` lädt `src/*.js` als **klassische Skripte** mit `defer`. Die Fachmodule besitzen eigene IIFE-Scopes und stellen nur ausgewählte APIs unter `globalThis.FinanzkompassModules` bereit. Die Abhängigkeitsreihenfolge in `/index.html` ist zwingend; weder `async` noch native `import`-Statements verwenden, wenn der Doppelklick-Start erhalten bleiben soll. Diese Architektur funktioniert sowohl unter `file://` (soweit Browserdateizugriff erlaubt) als auch über GitHub Pages.
 
-`src/index.html` ist die entwicklerfreundliche Modulversion und sollte über einen lokalen Webserver geöffnet werden. `dist/Finanzkompass.html` ist die vom Nutzer benötigte Einzeldatei.
+`npm run build` erzeugt optional `dist/Finanzkompass.html`, indem es dieselben Skripte und das CSS inline einbettet. Es ist weder eine Entwicklungs- noch eine Veröffentlichungs-Voraussetzung.
 
-## 7. Bekannte Beschränkungen
-
-- Keine Synchronisation mit Banken oder über mehrere Geräte. Kein Cloud-Backup. Browser-Storage ist nicht garantiert dauerhaft.
-- Keine amtlichen Feiertagskalender oder Banking-Cutoff-Zeiten. Mo–Fr ist **nicht** identisch mit Bankarbeitstagen.
-- Keine mehrteiligen Buchungen, Kategorien, Haushaltsbudgets, Währungswechsel, Zinsen/Dispolimits oder Kontoüberträge.
-- Keine nachträgliche historische Kontorekonstruktion vor dem Konto-Snapshot.
-- Die „Ø monatlicher Überschuss“-Kennzahl nutzt vereinfachte Frequenzfaktoren, nicht den exakten tatsächlichen Jahresplan; Einzelzahlungen und Serienlaufzeiten werden dort nicht berücksichtigt.
-- Serienänderung `future` und vorhandene Overrides sind über Vorkommensindizes gekoppelt; bei komplexen Kombinationen von Terminverschiebungen über die Serienendgrenze hinaus sollte die Logik vor neuer Funktionalität gezielt mit Regressionstests erweitert werden.
-- JSON-Version 1 wird validiert. Bei künftigen Breaking Changes einen expliziten Migrationseintritt für alte JSON-Dateien implementieren; nicht einfach alte Daten stillschweigend umformen oder überschreiben.
+**Einstieg ausschließlich `/index.html`.** Das früher zusätzlich vorhandene `src/index.html` ist entfernt. Tests können die IIFE-Module als Side-Effect importieren und APIs aus `globalThis.FinanzkompassModules` benutzen.

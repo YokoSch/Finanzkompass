@@ -90,7 +90,7 @@ with sync_playwright() as p:
     page.locator('form[data-form=reserve] button[type=submit]').click()
     assert page.evaluate('FinanzkompassDebug.state().settings.reserveCents')==10000
     page.locator('[data-action=range-custom]').click()
-    page.locator('form[data-form=range] input[name=start]').fill('2026-11-05')
+    page.locator('form[data-form=range] input[name=start]').fill(page.evaluate('FinanzkompassDebug.state().settings.balanceDate'))
     page.locator('form[data-form=range] input[name=end]').fill('2029-11-05')
     page.locator('form[data-form=range] button[type=submit]').click()
     assert page.evaluate('FinanzkompassDebug.state().settings.viewEnd')=='2029-11-05'

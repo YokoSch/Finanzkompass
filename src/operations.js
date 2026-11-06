@@ -1,11 +1,20 @@
+/*
+ * Modul operations.js – Browser-kompatibel auch über file://.
+ * Eigenständiger Scope: nur die bewusst exportierten Funktionen werden
+ * unter globalThis.FinanzkompassModules.operations veröffentlicht.
+ * Die Abhängigkeiten werden durch die Reihenfolge der defer-Skripte in
+ * /index.html geladen; kein Build, kein Server und keine Bibliothek nötig.
+ */
+(function(modules) {
+'use strict';
+const {id,newRule} = modules.model;
+const {nominalDate,occurrenceAt} = modules.recurrence;
+const {addDays,addMonthsAnchored,monthLength,pad,diffDays} = modules.date;
 /**
  * operations.js — fachliche Mutationen, zentral für alle UI-Eingabewege.
  * Übergabe: editierbarer State-Klon. UI ruft danach commit() mit Validierung.
  */
-import {id,newRule} from './model.js';
-import {nominalDate,occurrenceAt} from './recurrence.js';
-import {addDays,addMonthsAnchored,monthLength,pad,diffDays} from './date.js';
-export function putException(s,e){
+function putException(s,e){
   s.exceptions=s.exceptions.filter(x=>!(x.ruleId===e.ruleId&&x.occurrenceIndex===e.occurrenceIndex));
   s.exceptions.push(e);
 }
@@ -13,7 +22,7 @@ export function putException(s,e){
  * als neues Serien-Startdatum zu missdeuten. Z. B. Dez 15 -> Dez 12 bedeutet
  * für die GESAMTE Serie Nov 15 -> Nov 12 (nicht Neustart in Dezember).
  */
-export function shiftedSeriesAnchor(rule,index,newDate,currentDisplayedDate){
+function shiftedSeriesAnchor(rule,index,newDate,currentDisplayedDate){
   if(newDate===currentDisplayedDate)return rule.anchor;
   const nominal=nominalDate(rule,index);
   if(rule.frequency==='monthly'||rule.frequency==='yearly'){
@@ -26,7 +35,7 @@ export function shiftedSeriesAnchor(rule,index,newDate,currentDisplayedDate){
   }
   return addDays(rule.anchor,diffDays(newDate,nominal));
 }
-export function changeOccurrence(s,ev,values,scope='once'){
+function changeOccurrence(s,ev,values,scope='once'){
   const rule=s.rules.find(r=>r.id===ev.ruleId);
   if(!rule)throw Error('Die ursprüngliche Buchungsregel ist nicht mehr vorhanden.');
   const patch={title:values.title.trim(),amountCents:values.amountCents,date:values.date};
@@ -64,16 +73,16 @@ export function changeOccurrence(s,ev,values,scope='once'){
     // Sie werden absichtlich NICHT in die neue Serie eingebucht.
   }else throw Error('Unbekannter Änderungsumfang.');
 }
-export function cancelOccurrence(s,ev){
+function cancelOccurrence(s,ev){
   const rule=s.rules.find(r=>r.id===ev.ruleId);
   if(!rule)return;
   if(rule.frequency==='none')deleteRule(s,rule.id);
   else putException(s,{id:id(),ruleId:ev.ruleId,occurrenceIndex:ev.occurrenceIndex,action:'skip'});
 }
-export function restoreOccurrence(s,ruleId,index){
+function restoreOccurrence(s,ruleId,index){
   s.exceptions=s.exceptions.filter(x=>!(x.ruleId===ruleId&&x.occurrenceIndex===index));
 }
-export function deleteRule(s,ruleId){
+function deleteRule(s,ruleId){
   s.rules=s.rules.filter(r=>r.id!==ruleId);
   s.exceptions=s.exceptions.filter(e=>e.ruleId!==ruleId);
   // Posted-Snapshots explizit behalten: echte Kontohistorie darf nicht verschwinden.
@@ -83,7 +92,7 @@ export function deleteRule(s,ruleId){
  * unmittelbar mit dem Betrag ändern. 'included': Konto-Saldo war bereits aktualisiert.
  * Beide Modi entfernen das Planereignis dauerhaft aus der Prognose.
  */
-export function postOccurrence(s,ev,bookingMode='adjust',actualAmountCents=ev.amountCents,actualDate=s.settings.balanceDate){
+function postOccurrence(s,ev,bookingMode='adjust',actualAmountCents=ev.amountCents,actualDate=s.settings.balanceDate){
   if(s.posted.some(p=>p.ruleId===ev.ruleId&&p.occurrenceIndex===ev.occurrenceIndex))throw Error('Bereits gebucht.');
   const delta=bookingMode==='adjust'?actualAmountCents:0;
   s.posted.push({id:id(),ruleId:ev.ruleId,occurrenceIndex:ev.occurrenceIndex,
@@ -91,13 +100,16 @@ export function postOccurrence(s,ev,bookingMode='adjust',actualAmountCents=ev.am
     balanceAdjustmentCents:delta,createdAt:new Date().toISOString()});
   s.settings.currentBalanceCents+=delta;
 }
-export function undoPosted(s,p){
+function undoPosted(s,p){
   s.posted=s.posted.filter(x=>x.id!==p.id);
   s.settings.currentBalanceCents-=(p.balanceAdjustmentCents||0);
 }
-export function cleanAfterManualBalanceUpdate(s){
+function cleanAfterManualBalanceUpdate(s){
   // Kontostand wird als neue absolute Momentaufnahme erfasst.
   // Bereits gebuchte Belege bleiben erhalten; beim 'Rückgängig' dürfen deren
   // historische automatischen Saldoanpassungen nicht mehr verrechnet werden.
   s.posted=s.posted.map(p=>({...p,balanceAdjustmentCents:0}));
 }
+// Nur dieses Modul exportiert seine öffentliche API.
+modules.operations = Object.freeze({ putException, shiftedSeriesAnchor, changeOccurrence, cancelOccurrence, restoreOccurrence, deleteRule, postOccurrence, undoPosted, cleanAfterManualBalanceUpdate });
+})(globalThis.FinanzkompassModules || (globalThis.FinanzkompassModules = Object.create(null)));

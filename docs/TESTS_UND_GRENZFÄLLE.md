@@ -54,4 +54,4 @@ Die Tests in `tests/engine.test.mjs` prüfen insbesondere:
 
 ## Build-Abnahme für spätere Versionen
 
-Der Quelltext muss sowohl als ESM (via localhost) als auch als eigenständiges `dist/Finanzkompass.html` laufen. Browser-Konsole auf JavaScript-Fehler prüfen. Nach einem Schemawechsel unbedingt vorhandene JSON-Backups als Migrationsfall testen, bevor ausgeliefert wird.
+Die modularen Skripte der Root-`index.html` müssen sowohl nach Entpacken über `file://` (soweit lokale Dateien erlaubt sind) als auch unter GitHub Pages funktionieren. Der optionale Standalone-Export `dist/Finanzkompass.html` wird im Browser-Smoke-Test aus denselben Skripten getestet. Browser-Konsole auf JavaScript-Fehler prüfen. Nach einem Schemawechsel unbedingt vorhandene JSON-Backups als Migrationsfall testen, bevor ausgeliefert wird.

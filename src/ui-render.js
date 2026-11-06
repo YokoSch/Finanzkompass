@@ -1,14 +1,23 @@
+/*
+ * Modul ui-render.js – Browser-kompatibel auch über file://.
+ * Eigenständiger Scope: nur die bewusst exportierten Funktionen werden
+ * unter globalThis.FinanzkompassModules.uiRender veröffentlicht.
+ * Die Abhängigkeiten werden durch die Reihenfolge der defer-Skripte in
+ * /index.html geladen; kein Build, kein Server und keine Bibliothek nötig.
+ */
+(function(modules) {
+'use strict';
+const {icon} = modules.icons;
+const {eur,toEuroInput} = modules.money;
+const {todayISO,startOfMonth,endOfMonth,addMonthsAnchored,monthLabel,dateLabel,weekdayMon0,addDays} = modules.date;
+const {materializeEvents,upcomingOccurrences,nominalDate} = modules.recurrence;
+const {estimatedMonthlySurplus} = modules.forecast;
+const {drawForecastChart} = modules.chart;
 /** ui-render.js — HTML-Templates, ohne Zustandsänderungen.
  * Alle benutzerdefinierten Strings gehen durch esc(), damit Importdaten niemals
  * HTML oder Skripte in die Oberfläche einschleusen können.
  */
-import {icon} from './icons.js';
-import {eur,toEuroInput} from './money.js';
-import {todayISO,startOfMonth,endOfMonth,addMonthsAnchored,monthLabel,dateLabel,weekdayMon0,addDays} from './date.js';
-import {materializeEvents,upcomingOccurrences,nominalDate} from './recurrence.js';
-import {estimatedMonthlySurplus} from './forecast.js';
-import {drawForecastChart} from './chart.js';
-export const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const dateText=iso=>dateLabel(iso,{day:'2-digit',month:'short',year:'numeric'});
 const recurName=f=>({none:'Einmalig',daily:'Täglich',weekly:'Wöchentlich',monthly:'Monatlich',yearly:'Jährlich'}[f]||'Unbekannt');
 const pbtn=(action,text,cls='secondary-btn',extra='')=>`<button type="button" class="${cls}" data-action="${action}" ${extra}>${text}</button>`;
@@ -16,7 +25,7 @@ const formatValue=c=>`<span class="${c>0?'metric-green':c<0?'':'muted'}">${eur(c
 function navButton(ui,view,label,ico){return `<button type="button" data-action="nav" data-view="${view}" class="nav-button ${ui.view===view?'active':''}">${icon(ico,19)}<span>${label}</span></button>`;}
 function mobileButton(ui,view,label,ico){return `<button type="button" data-action="nav" data-view="${view}" class="${ui.view===view?'active':''}">${icon(ico,20)}${label}</button>`;}
 function pageData(view){return ({overview:['DEIN FINANZIELLER SPIELRAUM','Übersicht','Deine Finanzen, auf einen Blick.'],calendar:['ALLES ZUR RICHTIGEN ZEIT','Kalender','Jeden Tag verstehen und bequem planen.'],bookings:['DEINE BUCHUNGEN','Buchungen','Regelmäßiges und Einmaliges an einem Ort.'],settings:['PERSÖNLICHE EINSTELLUNGEN','Einstellungen','Reserve, Daten und Verhalten der App.']}[view]);}
-export function renderApp(ui){
+function renderApp(ui){
   const pg=pageData(ui.view), s=ui.state;
   return `<div class="app-shell">
     <aside class="sidebar"><div class="brand"><div class="brand-symbol">${icon('wallet',20)}</div><div>Finanzkompass<small>Dein Geld. Dein Überblick.</small></div></div>
@@ -79,7 +88,7 @@ function renderHome(ui){
   </section>`;
 }
 function emptyInline(message,action,text){return `<div style="text-align:center;padding:25px 6px;color:var(--muted);font-size:12px;line-height:1.8">${esc(message)}<div style="margin-top:12px">${pbtn(action,`${icon('plus',15)} ${text}`,'secondary-btn btn-sm')}</div></div>`;}
-export function renderEventRow(ui,ev,{showDate=true}={}){
+function renderEventRow(ui,ev,{showDate=true}={}){
   ui.eventMap.set(ev.key,ev);
   const meta=[showDate?dateText(ev.date):null,ev.posted?'Gebucht':ev.exception?'Ausnahme':ev.repeat?'Wiederkehrend':'Einmalig'].filter(Boolean).join(' · ');
   return `<div class="event-row clickable" role="button" tabindex="0" data-action="edit-event" data-key="${esc(ev.key)}"><div class="event-icon ${ev.amountCents>0?'positive':''}">${icon(ev.amountCents>0?'bank':'wallet',17)}</div><div class="event-desc"><div class="event-title">${esc(ev.title)}</div><div class="event-meta">${meta}</div></div><div class="event-amount ${ev.amountCents>0?'metric-green':''}">${eur(ev.amountCents,{signed:ev.amountCents>0})}</div>${icon('right',16)}</div>`;
@@ -109,7 +118,7 @@ function renderCalendar(ui){
 function renderBookings(ui){
   return `<section><div class="toolbar"><div class="seg-tabs">${[['all','Alle'],['recurring','Wiederkehrend'],['oneoff','Einmalig']].map(([v,label])=>`<button type="button" class="seg-tab ${ui.bookingFilter===v?'active':''}" data-action="filter-bookings" data-filter="${v}">${label}</button>`).join('')}</div><label class="searchfield">${icon('search',17)}<input id="rule-search" type="search" aria-label="Buchungen durchsuchen" placeholder="Buchung suchen ..." value="${esc(ui.search)}"/></label></div><div id="rules-content">${renderRules(ui)}</div></section>`;
 }
-export function renderRules(ui){
+function renderRules(ui){
   const records=ui.state.rules.filter(r=>(ui.bookingFilter==='all'||(ui.bookingFilter==='recurring'&&r.frequency!=='none')||(ui.bookingFilter==='oneoff'&&r.frequency==='none'))&&r.title.toLowerCase().includes(ui.search.toLowerCase().trim())).sort((a,b)=>a.title.localeCompare(b.title,'de'));
   if(!records.length)return `<div class="empty-state"><div class="empty-symbol">${icon('repeat',29)}</div><h3>${ui.state.rules.length?'Keine passenden Buchungen':'Noch keine Buchungen'}</h3><p>${ui.state.rules.length?'Probiere einen anderen Filter oder Suchbegriff.':'Lege eine Einnahme oder Ausgabe an. Wiederkehrende Buchungen werden automatisch über den ganzen Zeitraum geplant.'}</p>${pbtn('new-entry',`${icon('plus',17)} Neue Buchung`,'primary-btn')}</div>`;
   return `<div class="rule-list">${records.map(r=>{
@@ -193,3 +202,6 @@ function renderModal(ui){
   }
   return `<div class="overlay" data-overlay="1" role="presentation"><div class="modal ${t==='occurrences'?'wide':''}" role="dialog" aria-modal="true" aria-label="${esc(m.title||t)}">${content}</div></div>`;
 }
+// Nur dieses Modul exportiert seine öffentliche API.
+modules.uiRender = Object.freeze({ esc, renderApp, renderEventRow, renderRules });
+})(globalThis.FinanzkompassModules || (globalThis.FinanzkompassModules = Object.create(null)));

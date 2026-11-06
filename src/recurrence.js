@@ -1,11 +1,20 @@
+/*
+ * Modul recurrence.js – Browser-kompatibel auch über file://.
+ * Eigenständiger Scope: nur die bewusst exportierten Funktionen werden
+ * unter globalThis.FinanzkompassModules.recurrence veröffentlicht.
+ * Die Abhängigkeiten werden durch die Reihenfolge der defer-Skripte in
+ * /index.html geladen; kein Build, kein Server und keine Bibliothek nötig.
+ */
+(function(modules) {
+'use strict';
+const {addDays,addMonthsAnchored,addYearsAnchored,shiftWeekday,diffDays,isValidISO} = modules.date;
 /**
  * recurrence.js — erzeugt deterministische Vorkommen einer Buchungsregel.
  * WICHTIG: Monats-/Jahresdatum IMMER vom Anker aus berechnen, nicht iterativ:
  * 31.01. -> 28.02. -> 31.03. statt versehentlich dauerhaft am 28.
  * Weekend shift verändert nur das effektive Datum, nicht den Nominaltermin.
  */
-import {addDays,addMonthsAnchored,addYearsAnchored,shiftWeekday,diffDays,isValidISO} from './date.js';
-export function nominalDate(rule,index){
+function nominalDate(rule,index){
   const step=index*(rule.interval||1);
   switch(rule.frequency){
     case 'none': return index===0?rule.anchor:null;
@@ -25,7 +34,7 @@ function estimateLastIndex(rule, until){
   const months=(y2-y1)*12+m2-m1;
   return Math.max(0,Math.floor(months/((rule.frequency==='yearly'?12:1)*i))+2);
 }
-export function occurrenceAt(rule,index,exception=null){
+function occurrenceAt(rule,index,exception=null){
   const nominal=nominalDate(rule,index);
   if(!nominal||(rule.until && nominal>rule.until))return null;
   if(exception?.action==='skip')return null;
@@ -40,7 +49,7 @@ export function occurrenceAt(rule,index,exception=null){
     frequency:rule.frequency
   };
 }
-export function materializeEvents(s, from, to, {includePosted=false}={}) {
+function materializeEvents(s, from, to, {includePosted=false}={}) {
   if(!isValidISO(from)||!isValidISO(to)||to<from)return [];
   const exceptions=new Map(s.exceptions.map(e=>[`${e.ruleId}:${e.occurrenceIndex}`,e]));
   const posted=new Map(s.posted.map(p=>[`${p.ruleId}:${p.occurrenceIndex}`,p]));
@@ -76,7 +85,10 @@ export function materializeEvents(s, from, to, {includePosted=false}={}) {
   events.sort((a,b)=>a.date.localeCompare(b.date)||a.amountCents-b.amountCents||a.title.localeCompare(b.title));
   return events;
 }
-export function upcomingOccurrences(s,rule,count=5,asOf=s.settings.balanceDate){
+function upcomingOccurrences(s,rule,count=5,asOf=s.settings.balanceDate){
   const until=addYearsAnchored(asOf,3);
   return materializeEvents({...s,rules:[rule]},asOf,until).slice(0,count);
 }
+// Nur dieses Modul exportiert seine öffentliche API.
+modules.recurrence = Object.freeze({ nominalDate, occurrenceAt, materializeEvents, upcomingOccurrences });
+})(globalThis.FinanzkompassModules || (globalThis.FinanzkompassModules = Object.create(null)));

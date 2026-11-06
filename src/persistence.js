@@ -1,14 +1,23 @@
+/*
+ * Modul persistence.js – Browser-kompatibel auch über file://.
+ * Eigenständiger Scope: nur die bewusst exportierten Funktionen werden
+ * unter globalThis.FinanzkompassModules.persistence veröffentlicht.
+ * Die Abhängigkeiten werden durch die Reihenfolge der defer-Skripte in
+ * /index.html geladen; kein Build, kein Server und keine Bibliothek nötig.
+ */
+(function(modules) {
+'use strict';
+const {freshState,validateState,STORAGE_KEY} = modules.model;
 /**
  * persistence.js — kein Cloud-Dienst, keine Cookies; LocalStorage + JSON.
  * Manche Browser verbieten LocalStorage für direkt geöffnete file://-Seiten.
  * Dann bleibt die App absichtlich bedienbar (nur im Tab-Speicher) und zeigt
  * eine dauerhafte Warnung mit Hinweis auf den zwingenden JSON-Export.
  */
-import {freshState,validateState,STORAGE_KEY} from './model.js';
 let persistenceMode='local';
 let memoryCopy=null;
-export function getPersistenceMode(){return persistenceMode;}
-export function loadState(){
+function getPersistenceMode(){return persistenceMode;}
+function loadState(){
   try{
     const raw=window.localStorage.getItem(STORAGE_KEY);
     if(!raw)return {state:freshState(),warning:null};
@@ -23,7 +32,7 @@ export function loadState(){
     return {state:memoryCopy||freshState(),warning:'Dieser Browser sperrt die dauerhafte lokale Speicherung. Bitte vor dem Schließen unbedingt ein JSON-Backup exportieren.'};
   }
 }
-export function saveState(s){
+function saveState(s){
   s.updatedAt=new Date().toISOString();
   validateState(s);
   try{
@@ -34,7 +43,7 @@ export function saveState(s){
     memoryCopy=structuredClone(s);persistenceMode='memory';return false;
   }
 }
-export function exportState(s){
+function exportState(s){
   validateState(s);
   const b=new Blob([JSON.stringify(s,null,2)],{type:'application/json;charset=utf-8'});
   const url=URL.createObjectURL(b),link=document.createElement('a');
@@ -42,7 +51,10 @@ export function exportState(s){
   document.body.appendChild(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
-export async function importState(file){
+async function importState(file){
   if(file.size>8_000_000)throw Error('Datei ist größer als 8 MB.');
   return validateState(JSON.parse(await file.text()));
 }
+// Nur dieses Modul exportiert seine öffentliche API.
+modules.persistence = Object.freeze({ getPersistenceMode, loadState, saveState, exportState, importState });
+})(globalThis.FinanzkompassModules || (globalThis.FinanzkompassModules = Object.create(null)));

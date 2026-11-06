@@ -1,8 +1,17 @@
+/*
+ * Modul chart.js – Browser-kompatibel auch über file://.
+ * Eigenständiger Scope: nur die bewusst exportierten Funktionen werden
+ * unter globalThis.FinanzkompassModules.chart veröffentlicht.
+ * Die Abhängigkeiten werden durch die Reihenfolge der defer-Skripte in
+ * /index.html geladen; kein Build, kein Server und keine Bibliothek nötig.
+ */
+(function(modules) {
+'use strict';
+const {eur} = modules.money;
+const {dateLabel} = modules.date;
 /** chart.js — SVG-Chart ohne externe Abhängigkeit.
  * Ausdünnung als Min-Max-Körbe: Peaks/Tiefpunkte bleiben trotz Jahreszoom erhalten.
  */
-import {eur} from './money.js';
-import {dateLabel} from './date.js';
 function sampleDays(days,max=210){
   if(days.length<=max)return days;
   const result=[days[0]], buckets=Math.floor((max-2)/2), width=(days.length-2)/buckets;
@@ -17,7 +26,7 @@ function sampleDays(days,max=210){
   if(result.at(-1).date!==days.at(-1).date)result.push(days.at(-1));
   return result;
 }
-export function drawForecastChart(days,reserveCents,selectedDate){
+function drawForecastChart(days,reserveCents,selectedDate){
   if(!days.length)return `<div class="empty-chart">Keine Prognose für den gewählten Zeitraum.</div>`;
   const pts=sampleDays(days),w=900,h=248,L=16,R=16,T=20,B=32;
   const data=[...days.map(d=>d.closingCents),...days.map(d=>d.lowCents),reserveCents,0];
@@ -48,3 +57,6 @@ export function drawForecastChart(days,reserveCents,selectedDate){
     </svg>
   </div>`;
 }
+// Nur dieses Modul exportiert seine öffentliche API.
+modules.chart = Object.freeze({ drawForecastChart });
+})(globalThis.FinanzkompassModules || (globalThis.FinanzkompassModules = Object.create(null)));

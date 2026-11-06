@@ -1,23 +1,32 @@
+/*
+ * Modul ui-actions.js – Browser-kompatibel auch über file://.
+ * Eigenständiger Scope: nur die bewusst exportierten Funktionen werden
+ * unter globalThis.FinanzkompassModules.uiActions veröffentlicht.
+ * Die Abhängigkeiten werden durch die Reihenfolge der defer-Skripte in
+ * /index.html geladen; kein Build, kein Server und keine Bibliothek nötig.
+ */
+(function(modules) {
+'use strict';
+const {todayISO,startOfMonth,addMonthsAnchored,addYearsAnchored,isValidISO,dateLabel,diffDays} = modules.date;
+const {eur,parseEuroCents,toEuroInput,toSignedEuroInput} = modules.money;
+const {newRule,freshState,validateState} = modules.model;
+const {materializeEvents} = modules.recurrence;
+const {forecast} = modules.forecast;
+const {loadState,saveState,exportState,importState,getPersistenceMode} = modules.persistence;
+const {changeOccurrence,cancelOccurrence,deleteRule,restoreOccurrence,postOccurrence,undoPosted,cleanAfterManualBalanceUpdate} = modules.operations;
+const {renderApp,renderRules} = modules.uiRender;
 /**
  * ui-actions.js — einzige Stelle für Eventhandling / Benutzeraktionen.
  * Die Oberflächenfunktionen erzeugen nur HTML; Fachlogik: operations.js;
  * Rechenkern: forecast.js. Keine Inline-onclick-Handler.
  */
-import {todayISO,startOfMonth,addMonthsAnchored,addYearsAnchored,isValidISO,dateLabel,diffDays} from './date.js';
-import {eur,parseEuroCents,toEuroInput,toSignedEuroInput} from './money.js';
-import {newRule,freshState,validateState} from './model.js';
-import {materializeEvents} from './recurrence.js';
-import {forecast} from './forecast.js';
-import {loadState,saveState,exportState,importState,getPersistenceMode} from './persistence.js';
-import {changeOccurrence,cancelOccurrence,deleteRule,restoreOccurrence,postOccurrence,undoPosted,cleanAfterManualBalanceUpdate} from './operations.js';
-import {renderApp,renderRules} from './ui-render.js';
 function requireMoney(raw,allowNegative=false){
   const c=parseEuroCents(raw);
   if(c===null||(allowNegative?false:c<=0))throw Error('Bitte einen gültigen Betrag mit maximal zwei Nachkommastellen eingeben.');
   return c;
 }
 function requireDate(date){if(!isValidISO(date))throw Error('Bitte ein gültiges Datum eingeben.');return date;}
-export class FinanceUI {
+class FinanceUI {
   constructor(root){
     this.root=root;
     const loaded=loadState();
@@ -284,3 +293,6 @@ export class FinanceUI {
     this.mutate(s=>{s.settings.viewStart=anchor;s.settings.viewEnd=addMonthsAnchored(anchor,months);},null,{undo:false});
   }
 }
+// Nur dieses Modul exportiert seine öffentliche API.
+modules.uiActions = Object.freeze({ FinanceUI });
+})(globalThis.FinanzkompassModules || (globalThis.FinanzkompassModules = Object.create(null)));

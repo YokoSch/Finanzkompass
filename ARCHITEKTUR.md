@@ -1,4 +1,4 @@
-# Architektur / Datenmodell – Finanzkompass 1.0.0
+# Architektur / Datenmodell – Finanzkompass 1.0.1
 
 Dieses Dokument ist die **technische Referenz für zukünftige Entwicklungsarbeiten**. Vor Änderungen an Serien- oder Kontostandslogik bitte lesen.
 
@@ -14,6 +14,26 @@ Dieses Dokument ist die **technische Referenz für zukünftige Entwicklungsarbei
 `ui-render.js` soll niemals direkt Fachzustand ändern; `ui-actions.js` ist die einzige UI-Ereignis-Zentrale. Fachmutationen laufen über `operations.js` oder einen klaren Einstellungen-Patch; danach immer `validateState` → `forecast` → `saveState` → `render`. Bei einem Fehler keine teilweise gespeicherte Änderung.
 
 **Alle Beträge werden als ganze Cent (Integer) gespeichert.** Alle fachlichen Zeitpunkte sind **ISO-Kalendertage `YYYY-MM-DD`**, ohne Uhrzeit/Zeitzone. Die Berechnung eines Tages darf deshalb niemals von Sommer-/Winterzeit abhängen.
+
+## Lade- und Modulkonzept (Version 1.0.1)
+
+Die Root-`index.html` bindet jede Datei aus `src/` **als klassisches Skript mit `defer`** ein. Die Skripte werden in der dokumentierten Abhängigkeitsreihenfolge ausgeführt. Diese Form ist mit `file://` und GitHub Pages kompatibel und benötigt **keinen Build-Schritt**.
+
+Jedes Modul ist in eine eigene IIFE gekapselt, z. B.:
+
+```js
+(function(modules) {
+  'use strict';
+  const {addDays} = modules.date; // explizite Abhängigkeit
+  function someFeature() { /* ... */ }
+  modules.example = Object.freeze({someFeature}); // explizite öffentliche API
+})(globalThis.FinanzkompassModules ||
+   (globalThis.FinanzkompassModules = Object.create(null)));
+```
+
+**Neues Modul ergänzen:** Datei erstellen, nötige APIs aus dem Registry-Namespace beziehen, eigene API registrieren und eine `<script defer>`-Zeile **vor den davon abhängigen Modulen** in `index.html` ergänzen. **Nicht `async` verwenden.** Für Node-Tests die Datei als Side-Effect importieren und ihre Funktionen über `globalThis.FinanzkompassModules.<name>` beziehen.
+
+`src/main.js` startet zuletzt die App. `scripts/build.mjs` ist ein optionaler reiner Export in eine Einzel-HTML, die **nicht** das veröffentlichte Quellformat ist. Der Nutzer bearbeitet immer die Dateien unter `src/`. Die alte zweite Einstiegsdatei `src/index.html` wurde entfernt, damit nur noch ein Einstieg existiert.
 
 ## 2. Persistiertes Schema
 
